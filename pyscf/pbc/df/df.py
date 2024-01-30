@@ -173,6 +173,10 @@ class GDF(lib.StreamObject, aft.AFTDFMixin):
         self._cderi = None
         self._rsh_df = {}  # Range separated Coulomb DF objects
 
+        # SY NOTE: mpi for get_jk
+        self.use_mpi = False
+        self._keys = set(self.__dict__.keys())
+
     @property
     def auxbasis(self):
         return self._auxbasis
@@ -208,7 +212,7 @@ class GDF(lib.StreamObject, aft.AFTDFMixin):
             log.info('auxbasis = %s', self.auxbasis)
         else:
             log.info('auxbasis = %s', self.auxcell.basis)
-        if self.eta is not None:
+        if self.eta is not None:# ZHC NOTE
             log.info('eta = %s', self.eta)
         if self.mesh is not None:
             log.info('mesh = %s (%d PWs)', self.mesh, numpy.prod(self.mesh))
@@ -438,11 +442,22 @@ class GDF(lib.StreamObject, aft.AFTDFMixin):
             return df_jk.get_jk(self, dm, hermi, kpts[0], kpts_band, with_j,
                                 with_k, exxdiv)
 
+        # SY NOTE: add use_mpi
         vj = vk = None
         if with_k:
-            vk = df_jk.get_k_kpts(self, dm, hermi, kpts, kpts_band, exxdiv)
+            if self.use_mpi:
+                from mpi4pyscf.pbc.df import df_jk_mpi
+                df_args = {"verbose": self.verbose, "blockdim": self.blockdim, "max_memory": self.max_memory}
+                vk = df_jk_mpi.get_k_kpts(self.cell, self._cderi, dm, hermi, kpts, kpts_band, exxdiv, df_args=df_args)
+            else:
+                vk = df_jk.get_k_kpts(self, dm, hermi, kpts, kpts_band, exxdiv)
         if with_j:
-            vj = df_jk.get_j_kpts(self, dm, hermi, kpts, kpts_band)
+            if self.use_mpi:
+                from mpi4pyscf.pbc.df import df_jk_mpi
+                df_args = {"verbose": self.verbose, "blockdim": self.blockdim, "max_memory": self.max_memory}
+                vj = df_jk_mpi.get_j_kpts(self.cell, self._cderi, dm, hermi, kpts, kpts_band, df_args=df_args)
+            else:
+                vj = df_jk.get_j_kpts(self, dm, hermi, kpts, kpts_band)
         return vj, vk
 
     get_eri = get_ao_eri = df_ao2mo.get_eri

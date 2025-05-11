@@ -110,6 +110,7 @@ def get_occ(mf, mo_energy_kpts=None, mo_coeff_kpts=None):
     nocc = mf.cell.nelectron * nkpts
 
     mo_energy = np.sort(np.hstack(mo_energy_kpts))
+    nocc = round(nocc) # SY TEST
     fermi = mo_energy[nocc-1]
     mo_occ_kpts = []
     for mo_e in mo_energy_kpts:

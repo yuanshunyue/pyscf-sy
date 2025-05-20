@@ -1336,10 +1336,6 @@ def _sep_real_imag(a, ncolmax, order):
     aI[:,:ncol] = numpy.asarray(a.imag, order=order)
     return aR, aI
 def _format_mo(mo_coeff, mo_occ, shape=None, order='F', precision=DM2MO_PREC):
-    for mo,mocc in zip(mo_coeff,mo_occ):
-        print("mo shape:", mo.shape)
-        print("mocc shape:", mocc.shape)
-        print()
     mos = [mo[:,mocc>precision]*mocc[mocc>precision]**0.5
            for mo,mocc in zip(mo_coeff,mo_occ)]
     nkpts = len(mos)

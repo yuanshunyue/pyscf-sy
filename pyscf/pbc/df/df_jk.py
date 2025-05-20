@@ -296,13 +296,16 @@ def get_k_kpts(mydf, dm_kpts, hermi=1, kpts=numpy.zeros((1,3)), kpts_band=None,
     skmoR = skmo2R = None
     if not mydf.force_dm_kbuild:
         if mo_coeff is not None:
-            if isinstance(mo_coeff[0], (list, tuple)):
+            import numpy as np
+            if isinstance(mo_coeff[0], (list, tuple)) or (isinstance(mo_coeff[0], numpy.ndarray)
+                                                          and mo_coeff[0].ndim == 3):
                 mo_coeff = [mo for mo1 in mo_coeff for mo in mo1]
             if len(mo_coeff) != nset*nkpts: # wrong shape
                 log.warn('mo_coeff from dm tag has wrong shape. '
                          'Calculating mo from dm instead.')
                 mo_coeff = None
-            elif isinstance(mo_occ[0], (list, tuple)):
+            elif isinstance(mo_occ[0], (list, tuple)) or (isinstance(mo_occ[0], numpy.ndarray)
+                                                          and mo_occ[0].ndim == 2):
                 mo_occ = [mo for mo1 in mo_occ for mo in mo1]
         if mo_coeff is not None:
             skmoR, skmoI = _format_mo(mo_coeff, mo_occ, shape=(nset,nkpts), order='F',
@@ -1333,6 +1336,10 @@ def _sep_real_imag(a, ncolmax, order):
     aI[:,:ncol] = numpy.asarray(a.imag, order=order)
     return aR, aI
 def _format_mo(mo_coeff, mo_occ, shape=None, order='F', precision=DM2MO_PREC):
+    for mo,mocc in zip(mo_coeff,mo_occ):
+        print("mo shape:", mo.shape)
+        print("mocc shape:", mocc.shape)
+        print()
     mos = [mo[:,mocc>precision]*mocc[mocc>precision]**0.5
            for mo,mocc in zip(mo_coeff,mo_occ)]
     nkpts = len(mos)
